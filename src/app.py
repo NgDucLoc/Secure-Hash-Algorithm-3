@@ -1,112 +1,160 @@
 from tkinter import *
+from tkinter import messagebox
+from tkinter import ttk
 
 from tkinter.ttk import *
 
 from signature import *
+import re
+
+# initialization global variable
+keys = None
+hash = None
+signed_message = None
+cyphertext = None
 
 
 window = Tk()
 
 window.title("APP")
+window.geometry("600x400")
 
-
-def clicked2():
+def creatk():
+    global keys
     keys = RSA.generateKey()
-    key = Label(window, text=str(keys))
-    key.grid(column=2, row=6)
+    print(keys)
+    publickey = Label(CreatKey, text="Public Key: " + str(keys[0]))
+    publickey.place(x = 100, y = 100)
 
-# reset window
-def New():
-    window.destroy()
+    privatekey = Label(CreatKey, text="Private Key: " + str(keys[1]))
+    privatekey.place(x = 100, y = 120)
+
+    savekeybutton = Button(CreatKey, text="Save", command= savekey)
+    savekeybutton.place(x = 300, y = 150)
+
+def savekey():
+    global keys
+    a = keys
+    with open("D:\Git_desktop\Secure-Hash-Algorithm-3\keys.txt", 'w') as f:
+        f.write(str(a))
+    f.close()
+
+    messagebox.showinfo('Save Key', 'Successfully!')
+
+
+def importkey():
+    global keys
+    with open("D:\Git_desktop\Secure-Hash-Algorithm-3\keys.txt", 'r') as f:
+        a = f.read()
+    f.close()
+    a = [int(i) for i in re.findall(r'\d+', a)]
+    keys = [[a[0],a[1]],[a[2],a[3]]]
+    messagebox.showinfo('Import Key', 'Successfully!')
+
+
+def saveEC():
+    global signed_message
+    print(signed_message)
+    with open("D:\Git_desktop\Secure-Hash-Algorithm-3\encryption.txt", 'w') as f:
+        f.write(signed_message)
+    f.close()
+    messagebox.showinfo('Save', 'Successfully!')
+def importEncryptext():
+    global cyphertext
+    with open("D:\Git_desktop\Secure-Hash-Algorithm-3\encryption.txt", 'r') as f:
+        line = f.readline()
+        cyphertext = ''
+        while line:
+            # if (line != '\n'):
+            cyphertext =cyphertext + line
+            line = f.readline()
+    f.close()
+    messagebox.showinfo('Import Encryptext', 'Successfully!')
 
 def creatkey():
-    text2 = Label(window, text="Sinh key: ")
-    text2.grid(column=0, row = 4)
-    btn = Button(window, text="Sinh key", command=clicked2)
-    btn.grid(column=0, row=5)
+    text2 = Label(CreatKey, text="Sinh key: ")
+    text2.place(x= 20, y= 20)
+    creatkbutton = Button(CreatKey, text="Sinh key", command = creatk)
+    creatkbutton.place(x = 20, y = 40)
+
 
 def encryption():
-    pass
+    encryptext = Label(Encryption, text = "Mã hoá:")
+    encryptext.place(x=20, y= 20)
+    importKeybutton = Button(Encryption, text = "import Key", command = importkey)
+    importKeybutton.place(x= 20, y=40)
 
-def decryption():
-    pass
+    plaintext = Label(Encryption, text = "Nhập bản rõ: ")
+    plaintext.place(x=20, y = 80)
+
+    txtinput = Entry(Encryption, width=100)
+    txtinput.pack(fill=X, padx=20, pady=100)
+
+    def encrypsub():
+        global keys
+        message = txtinput.get()
+        signa = Signature("SHA3-256")
+        global signed_message
+        signed_message = signa.sign(message, keys[1])
+        print(keys[1])
+        cyphertext1 = Label(Encryption, text="Bản mã là:")
+        cyphertext1.place(x=20, y=200)
+
+        cyphertext2 = Label(Encryption, text=signed_message)
+        cyphertext2.place(x=20, y=230)
+
+        saveECbutton = Button(Encryption, text = "Save", command = saveEC)
+        saveECbutton.place(x= 300, y = 270)
+
+    encrypbutton = Button(Encryption, text = "Mã hoá", command= encrypsub)
+    encrypbutton.place(x= 300, y = 150)
+
+
+
+
+def verify():
+    decryptext = Label(Verify, text="Xác minh:")
+    decryptext.place(x=20, y=20)
+    importKeybutton = Button(Verify, text="import Key", command=importkey)
+    importKeybutton.place(x=20, y=40)
+
+    cyphertext = Button(Verify, text = "import EncrypText", command= importEncryptext)
+    cyphertext.place(x=20, y=80)
+
+    def verifysub():
+        global keys
+        global cyphertext
+        signa = Signature("SHA3-256")
+        print("cyphertext",cyphertext)
+        print(keys[0])
+        verify = signa.verifySignedDocument(cyphertext, keys[0])
+
+        result1 = Label(Verify, text = "Kết quả xác minh: "+ str(verify))
+        result1.place(x=20, y= 200)
+
+    encrypbutton = Button(Verify, text="Xác minh", command=verifysub)
+    encrypbutton.place(x=20, y=150)
+
 
 def exit():
-    pass
+    window.destroy()
 
-#tạo mục menu
-menu = Menu(window)
-new_item = Menu(menu)
-new_item.add_command(label='New',command=New)
-new_item.add_separator()
-new_item.add_command(label='Sinh khoá',command=creatkey)
-new_item.add_separator()
-new_item.add_command(label='Mã hoá',command=encryption)
-new_item.add_separator()
-new_item.add_command(label='Giải mã',command=decryption)
-new_item.add_separator()
-new_item.add_command(label='Exit',command=exit)
-menu.add_cascade(label='File', menu=new_item)
-window.config(menu=menu)
+#tao tab
+tab_control = ttk.Notebook(window)
 
+CreatKey = ttk.Frame(tab_control)
+Encryption = ttk.Frame(tab_control)
+Verify = ttk.Frame(tab_control)
 
+tab_control.add(CreatKey, text='CreatKey')
+tab_control.add(Encryption, text='Encryption')
+tab_control.add(Verify, text='Verify')
 
+creatkey()
+encryption()
+verify()
 
-
-#chọn loại SHA3
-# lbl = Label(window, text="Chọn loại SHA3: ")
-# lbl.grid(column=0, row=0)
-# selected = IntVar()
-# rad1 = Radiobutton(window, text='SHA3-224', value=1, variable= selected)
-# rad2 = Radiobutton(window, text='SHA3-256', value=2, variable= selected)
-# rad3 = Radiobutton(window, text='SHA3-384', value=3, variable= selected)
-# rad4 = Radiobutton(window, text='SHA3-512', value=4, variable= selected)
-#
-# def clicked1():
-#     type = selected.get()
-#     print(type)
-#     if (type ==1):
-#         signa = Signature("SHA3-256")
-#     elif (type == 2):
-#         signa = Signature("SHA3-224")
-#     elif (type == 3):
-#         signa = Signature("SHA3-384")
-#     elif (type == 4):
-#         signa = Signature("SHA3-512")
-#     return signa
-# btn = Button(window, text="Chọn loại", command=clicked1)
-# rad1.grid(column=0, row=1)
-# rad2.grid(column=1, row=1)
-# rad3.grid(column=2, row=1)
-# rad4.grid(column=3, row=1)
-# btn.grid(column=4, row=1)
-#
-#
-# #Sinh key
-# text2 = Label(window, text="Sinh key: ")
-# text2.grid(column=0, row = 4)
-# def clicked2():
-#     keys = RSA.generateKey()
-#     key = Label(window, text=str(keys))
-#     key.grid(column=2, row=6)
-
-#
-# def encryption():
-#     btn = Button(window, text="Sinh key", command=clicked2)
-#     btn.grid(column=0, row=5)
-#
-# def decryption():
-#     pass
-#
-#
-#
-# encryp = Button(window, text="Mã hoá", command=encryption)
-# encryp.grid(column=0, row=5)
-# decryp = Button(window, text="Giải mã", command=decryption)
-# decryp.grid(column=2, row=5)
-#
-# #nhập message
-# txt = Entry(window, width=10)
-# txt.grid(column=1, row=1000)
+tab_control.pack(expand=1, fill='both')
 
 window.mainloop()
+

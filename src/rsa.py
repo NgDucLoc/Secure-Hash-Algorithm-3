@@ -2,6 +2,7 @@ from typing import List
 from sympy import randprime, mod_inverse
 from math import gcd
 import random
+import re
 
 class RSA:
     @staticmethod
@@ -44,12 +45,16 @@ class RSA:
 
     @staticmethod
     def decrypt(text:str, private_key:List[int]) -> str:
+        text = str(re.findall(r'\d+', text)[0])
         ciphers_ascii = RSA.blockCipherTextToAscii(text)
         plain_ascii = []
         for i in range(len(ciphers_ascii)):
             cipher = int(ciphers_ascii[i])
             plain = pow(cipher, private_key[0], private_key[1])
-            plain = chr(plain)
+            try:
+                plain = chr(plain)
+            except:
+                break
             plain_ascii.append(plain)
         plain_ascii = "".join(plain_ascii)
         return plain_ascii
